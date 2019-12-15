@@ -1,77 +1,111 @@
 import React, { useState, useEffect } from "react";
-import Note from "./Note";
-import noteService from "../services/notes";
+import Filter from "./Filter";
+import PersonForm from "./PersonForm";
+import Persons from "./Persons";
+import contacts from "../services/contacts";
 
 const App = () => {
-  const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState("");
-  const [showAll, setShowAll] = useState(true);
+  const [persons, setPersons] = useState([]);
+  const [filterText, setFilterText] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
 
   useEffect(() => {
-    noteService.getAll().then(noteObjects => {
-      setNotes(noteObjects);
+    contacts.getAll().then(persons => {
+      setPersons(persons);
     });
   }, []);
 
-  const notesToShow = showAll ? notes : notes.filter(note => note.important);
-
-  const toggleImportance = id => {
-    const note = notes.find(note => note.id === id);
-    const changedNote = { ...note, important: !note.important };
-
-    noteService
-      .update(id, changedNote)
-      .then(noteObject => {
-        setNotes(notes.map(note => (note.id !== id ? note : noteObject)));
-      })
-      .catch(error => {
-        alert(`the note '${note.content}' was already deleted from server`);
-        // remove error notes
-        setNotes(notes.filter(note => note.id !== id));
-      });
+  const duplicatePerson = () => {
+    const duplicate = persons.find((person, index) => {
+      return person.name === newName; // không dùng indexof vì có name A có thể nằm trong name B
+    });
+    if (duplicate) {
+      return duplicate;
+    }
+    return false;
   };
 
-  const rows = () =>
-    notesToShow.map(note => (
-      <Note
-        toggleImportance={() => toggleImportance(note.id)}
-        key={note.id}
-        note={note}
-      />
-    ));
-
-  const handleNoteChange = event => {
-    setNewNote(event.target.value);
-  };
-
-  const addNote = event => {
-    event.preventDefault();
-    const noteObject = {
-      content: newNote,
-      date: new Date().toISOString(),
-      important: Math.random() > 0.5,
-      id: notes.length + 1
+  const addPerson = e => {
+    e.preventDefault();
+    const duplicate = duplicatePerson();
+    if (duplicate) {
+      const isUpdate = window.confirm(
+        `${newName} is already added to phonebook, replace the old number with the new one`
+      );
+      if (isUpdate) {
+        const updatedContact = {
+          id: duplicate.id,
+          name: duplicate.name,
+          phone: newPhone
+        };
+        contacts
+          .update(duplicate.id, updatedContact)
+          .then(person => handleAfterUpdate(person));
+        return;
+      }
+      return;
+    }
+    const newPerson = {
+      name: newName,
+      phone: newPhone
     };
+    contacts.create(newPerson).then(person => {
+      handleAfterCreate(person);
+    });
+  };
 
-    noteService.create(noteObject).then(noteObject => {
-      setNotes(notes.concat(noteObject));
-      setNewNote("");
+  const handleAfterCreate = person => {
+    setPersons([...persons, person]);
+    setNewName("");
+    setNewPhone("");
+  };
+
+  const handleAfterUpdate = changedPerson => {
+    setPersons(
+      persons.map(person =>
+        person.id !== changedPerson.id ? person : changedPerson
+      )
+    );
+  };
+
+  const handleInputText = (e, type) => {
+    const value = e.target.value;
+    if ("name" === type) {
+      setNewName(value);
+    } else {
+      setNewPhone(value);
+    }
+  };
+
+  const handleInputFilter = e => {
+    const value = e.target.value;
+    setFilterText(value);
+  };
+
+  const handleDelete = id => {
+    contacts.del(id).then(() => {
+      const newPersons = persons.filter(person => person.id !== id);
+      setPersons(newPersons);
     });
   };
 
   return (
     <div>
-      <h1>Notes</h1>
-      <div>
-        <button onClick={() => setShowAll(!showAll)}>
-          show {showAll ? "important" : "all"}
-        </button>
-      </div>
-      <ul>{rows()}</ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type="submit">save</button>
-      </form>
+      <h2>Phonebook</h2>
+      <Filter handleInputFilter={handleInputFilter} />
+      <PersonForm
+        addPerson={addPerson}
+        handleInputText={handleInputText}
+        newName={newName}
+        newPhone={newPhone}
+      />
+      <h2>Numbers</h2>
+      <Persons
+        persons={persons}
+        filterText={filterText}
+        handleDelete={handleDelete}
+      />
     </div>
   );
 };

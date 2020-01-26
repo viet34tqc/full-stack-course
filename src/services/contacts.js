@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = "http://localhost:3001/contacts";
+const baseUrl = "/api/persons"; // Khi copy từ frontend sang backend thì bỏ đoạn localhost:3000 đi vì frontend và backend nằm cùng thư mục
 
 const getAll = () => {
   const request = axios.get(baseUrl);

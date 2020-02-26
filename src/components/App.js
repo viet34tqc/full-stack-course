@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Filter from "./Filter";
 import PersonForm from "./PersonForm";
 import Persons from "./Persons";
+import Notification from "./Notification";
 import contacts from "../services/contacts";
 
 const App = () => {
@@ -9,6 +10,7 @@ const App = () => {
   const [filterText, setFilterText] = useState("");
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     contacts.getAll().then(persons => {
@@ -50,9 +52,15 @@ const App = () => {
       name: newName,
       phone: newPhone
     };
-    contacts.create(newPerson).then(person => {
-      handleAfterCreate(person);
-    });
+    contacts
+      .create(newPerson)
+      .then(person => {
+        handleAfterCreate(person);
+      })
+      .catch(error => {
+        setErrorMessage(error.response.data.error);
+        console.log(error.response.data);
+      });
   };
 
   const handleAfterCreate = person => {
@@ -93,6 +101,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessage} />
       <Filter handleInputFilter={handleInputFilter} />
       <PersonForm
         addPerson={addPerson}

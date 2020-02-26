@@ -67,6 +67,7 @@ const App = () => {
     setPersons([...persons, person]);
     setNewName("");
     setNewPhone("");
+    setErrorMessage(null);
   };
 
   const handleAfterUpdate = changedPerson => {
@@ -75,6 +76,7 @@ const App = () => {
         person.id !== changedPerson.id ? person : changedPerson
       )
     );
+    setErrorMessage(null);
   };
 
   const handleInputText = (e, type) => {

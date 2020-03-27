@@ -3,17 +3,34 @@ import Note from "./Note";
 import Notification from "./Notification";
 import Footer from "./Footer";
 import noteService from "../services/notes";
+import loginService from "../services/login";
 
 const App = () => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [showAll, setShowAll] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
 
+  // Dấu [] ở cuối useEffect là chỉ chạy 1 lần
   useEffect(() => {
     noteService.getAll().then(noteObjects => {
       setNotes(noteObjects);
     });
+  }, []);
+
+  // Check nếu có user trong local storage thì lấy ra
+  // Dấu [] ở cuối useEffect là chỉ chạy 1 lần
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem("loggedUser");
+
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON);
+      setUser(user);
+      noteService.setToken(user.token);
+    }
   }, []);
 
   const notesToShow = showAll ? notes : notes.filter(note => note.important);
@@ -60,12 +77,66 @@ const App = () => {
       important: Math.random() > 0.5,
       id: notes.length + 1
     };
-
-    noteService.create(noteObject).then(noteObject => {
-      setNotes(notes.concat(noteObject));
-      setNewNote("");
-    });
+    noteService.setToken(user.token);
+    try {
+      noteService.create(noteObject).then(noteObject => {
+        setNotes(notes.concat(noteObject));
+        setNewNote("");
+      });
+    } catch (error) {
+      setErrorMessage(error);
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
+    }
   };
+
+  const handleLogin = async e => {
+    e.preventDefault();
+    try {
+      const user = await loginService.login({ username, password });
+      window.localStorage.setItem("loggedUser", JSON.stringify(user));
+      setUser(user);
+      setUsername("");
+      setPassword("");
+    } catch (error) {
+      setErrorMessage("Wrong Credentials");
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
+    }
+  };
+
+  const noteForm = () => (
+    <form onSubmit={addNote}>
+      <input value={newNote} onChange={handleNoteChange} />
+      <button type="submit">save</button>
+    </form>
+  );
+
+  const loginForm = () => (
+    <form onSubmit={handleLogin}>
+      <div>
+        <h2>Login</h2>
+        <input
+          type="text"
+          value={username}
+          name="Username"
+          onChange={({ target }) => setUsername(target.value)}
+        />
+      </div>
+
+      <div>
+        <input
+          type="text"
+          value={password}
+          name="Username"
+          onChange={({ target }) => setPassword(target.value)}
+        />
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  );
 
   return (
     <div>
@@ -73,16 +144,21 @@ const App = () => {
 
       {errorMessage ? <Notification message={errorMessage} /> : ""}
 
+      {user === null ? (
+        loginForm()
+      ) : (
+        <div>
+          <p>{user.name} logged in</p>
+          {noteForm()}
+        </div>
+      )}
+
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? "important" : "all"}
         </button>
       </div>
       <ul>{rows()}</ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type="submit">save</button>
-      </form>
 
       <Footer />
     </div>

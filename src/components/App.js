@@ -16,6 +16,9 @@ const App = () => {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
 
+  // Tạo noteFormRef và truyền nó vào component noteForm.
+  const noteFormRef = React.createRef();
+
   // Dấu [] ở cuối useEffect là chỉ chạy 1 lần
   useEffect(() => {
     noteService.getAll().then(noteObjects => {
@@ -68,6 +71,7 @@ const App = () => {
     ));
 
   const addNote = noteObject => {
+    noteFormRef.current.toggleVisibility();
     noteService.setToken(user.token);
     noteService.create(noteObject).then(noteObject => {
       setNotes(notes.concat(noteObject));
@@ -90,29 +94,23 @@ const App = () => {
     }
   };
 
-  const noteForm = () => {
-    return (
-      <Togglable buttonLabel="new note">
-        <NoteForm
-          createNote={addNote}
-        />
-      </Togglable>
-    );
-  };
+  const noteForm = () => (
+    <Togglable buttonLabel="new note" ref={noteFormRef}>
+      <NoteForm createNote={addNote} />
+    </Togglable>
+  );
 
-  const loginForm = () => {
-    return (
-      <Togglable buttonLabel="login">
-        <LoginForm
-          username={username}
-          password={password}
-          handleUsernameChange={({ target }) => setUsername(target.value)}
-          handlePasswordChange={({ target }) => setPassword(target.value)}
-          handleSubmit={handleLogin}
-        />
-      </Togglable>
-    );
-  };
+  const loginForm = () => (
+    <Togglable buttonLabel="login">
+      <LoginForm
+        username={username}
+        password={password}
+        handleUsernameChange={({ target }) => setUsername(target.value)}
+        handlePasswordChange={({ target }) => setPassword(target.value)}
+        handleSubmit={handleLogin}
+      />
+    </Togglable>
+  );
 
   return (
     <div>

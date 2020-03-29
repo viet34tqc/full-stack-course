@@ -18,6 +18,9 @@ const create = async newObject => {
     headers: { Authorization: token }
   };
 
+  // await trả về kết quả
+  // Nếu không có await thì trả về post như bình thường
+  // The keyword await makes JavaScript wait until that promise settles and returns its result.
   const response = await axios.post(baseUrl, newObject, config);
   return response.data;
 };

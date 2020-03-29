@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import Note from "./Note";
 import Notification from "./Notification";
 import Footer from "./Footer";
+import LoginForm from "./LoginForm";
+import NoteForm from "./NoteForm";
+import Togglable from "./Togglable";
 import noteService from "../services/notes";
 import loginService from "../services/login";
 
@@ -107,36 +110,31 @@ const App = () => {
     }
   };
 
-  const noteForm = () => (
-    <form onSubmit={addNote}>
-      <input value={newNote} onChange={handleNoteChange} />
-      <button type="submit">save</button>
-    </form>
-  );
-
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        <h2>Login</h2>
-        <input
-          type="text"
-          value={username}
-          name="Username"
-          onChange={({ target }) => setUsername(target.value)}
+  const noteForm = () => {
+    return (
+      <Togglable buttonLabel="new note">
+        <NoteForm
+          onSubmit={addNote}
+          value={newNote}
+          handleChange={handleNoteChange}
         />
-      </div>
+      </Togglable>
+    );
+  };
 
-      <div>
-        <input
-          type="text"
-          value={password}
-          name="Username"
-          onChange={({ target }) => setPassword(target.value)}
+  const loginForm = () => {
+    return (
+      <Togglable buttonLabel="login">
+        <LoginForm
+          username={username}
+          password={password}
+          handleUsernameChange={({ target }) => setUsername(target.value)}
+          handlePasswordChange={({ target }) => setPassword(target.value)}
+          handleSubmit={handleLogin}
         />
-      </div>
-      <button type="submit">Login</button>
-    </form>
-  );
+      </Togglable>
+    );
+  };
 
   return (
     <div>
